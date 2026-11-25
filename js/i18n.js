@@ -16,6 +16,7 @@
 
   const UI = {
     en: {
+      open3d: 'Try in 3D',
       docTitle: 'Body Explorer: discover the human body',
       appTitle: 'Body Explorer',
       tagline: 'Peek inside the human body!',
@@ -72,6 +73,7 @@
       noscript: 'This app needs JavaScript to work.',
     },
     fr: {
+      open3d: 'Essayer en 3D',
       docTitle: 'Explore ton corps : découvre le corps humain',
       appTitle: 'Explore ton corps',
       tagline: 'Découvre l’intérieur du corps humain !',
@@ -128,6 +130,7 @@
       noscript: 'Cette application a besoin de JavaScript pour fonctionner.',
     },
     nl: {
+      open3d: 'Probeer in 3D',
       docTitle: 'Ontdek je lichaam: verken het menselijk lichaam',
       appTitle: 'Ontdek je lichaam',
       tagline: 'Kijk binnen in het menselijk lichaam!',
