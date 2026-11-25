@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Body Explorer: content checks</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 24px; color: #1d2742; }
+    h1 { font-size: 1.4rem; }
+    li.pass { color: #15803d; }
+    li.fail { color: #b91c1c; font-weight: 700; }
+    #summary { font-weight: 800; font-size: 1.2rem; }
+  </style>
+  <script src="../js/content.js"></script>
+  <script src="../js/i18n.js"></script>
+  <script src="../js/body-svg.js"></script>
+</head>
+<body>
+  <h1>Body Explorer: content checks</h1>
+  <p id="summary">Running…</p>
+  <ul id="results"></ul>
+  <script>
+    (function () {
+      const { SYSTEMS, PARTS } = BodyContent;
+      const { LANGS, UI } = BodyI18n;
+      const results = [];
+      const check = (name, problems) => results.push({ name, problems });
+
+      // 1. Every part has a name, info and fact in every language.
+      const missingText = [];
+      for (const [id, part] of Object.entries(PARTS)) {
+        for (const lang of LANGS) {
+          for (const field of ['name', 'info', 'fact']) {
+            const v = part[lang] && part[lang][field];
+            if (typeof v !== 'string' || !v.trim()) missingText.push(`${id}.${lang}.${field}`);
+          }
+        }
+      }
+      check('Every part is translated (name, info, fact) in FR/NL/EN', missingText);
+
+      // 2. Systems are complete and referenced correctly.
+      const sysIds = SYSTEMS.map((s) => s.id);
+      const sysProblems = [];
+      for (const s of SYSTEMS) {
+        for (const lang of LANGS) {
+          if (!s.name[lang]) sysProblems.push(`${s.id}.name.${lang}`);
+          if (!s.desc[lang]) sysProblems.push(`${s.id}.desc.${lang}`);
+        }
+        if (!Object.values(PARTS).some((p) => p.system === s.id)) sysProblems.push(`${s.id} has no parts`);
+      }
+      for (const [id, p] of Object.entries(PARTS)) if (!sysIds.includes(p.system)) sysProblems.push(`${id} → unknown system ${p.system}`);
+      check('Systems are translated and every part belongs to a known system', sysProblems);
+
+      // 3. UI strings exist in every language.
+      const keys = new Set(LANGS.flatMap((l) => Object.keys(UI[l])));
+      const missingUi = [];
+      for (const k of keys) for (const l of LANGS) if (UI[l][k] === undefined) missingUi.push(`${l}.${k}`);
+      check('Every interface string exists in FR/NL/EN', missingUi);
+
+      // 4. Placeholders match across languages.
+      const ph = (s) => (Array.isArray(s) ? s.join(' ') : s).match(/\{\w+\}/g)?.sort().join(',') || '';
+      const phProblems = [];
+      for (const k of keys) {
+        const ref = ph(UI.en[k] || '');
+        for (const l of LANGS) if (UI[l][k] !== undefined && ph(UI[l][k]) !== ref) phProblems.push(`${l}.${k}`);
+      }
+      check('Placeholders like {name} match in every language', phProblems);
+
+      // 5. The drawing and the content describe the same parts.
+      const host = document.createElement('div');
+      host.innerHTML = BodySVG.buildSVG();
+      const drawn = new Map();
+      host.querySelectorAll('.part').forEach((g) => {
+        drawn.set(g.dataset.part, g.closest('.layer').dataset.layer);
+      });
+      const drawProblems = [];
+      for (const [id, p] of Object.entries(PARTS)) {
+        if (!drawn.has(id)) drawProblems.push(`${id} is not drawn`);
+        else if (drawn.get(id) !== p.system) drawProblems.push(`${id} is drawn in layer ${drawn.get(id)}, expected ${p.system}`);
+      }
+      for (const id of drawn.keys()) if (!PARTS[id]) drawProblems.push(`${id} is drawn but has no content`);
+      check('Every part is drawn in the right layer, and every drawn part has content', drawProblems);
+
+      // 6. Every system has a layer, and vice versa.
+      const layerIds = [...host.querySelectorAll('.layer')].map((g) => g.dataset.layer);
+      const layerProblems = sysIds.filter((id) => !layerIds.includes(id)).map((id) => `no layer for ${id}`)
+        .concat(layerIds.filter((id) => !sysIds.includes(id)).map((id) => `layer ${id} has no system`));
+      check('Every body system has exactly one layer', layerProblems);
+
+      // 7. Generated SVG has no NaN coordinates.
+      const svgText = host.innerHTML;
+      check('Generated SVG contains no NaN/undefined values', /NaN|undefined/.test(svgText) ? ['found NaN/undefined in SVG'] : []);
+
+      const ul = document.getElementById('results');
+      let failed = 0;
+      for (const r of results) {
+        const li = document.createElement('li');
+        const ok = r.problems.length === 0;
+        if (!ok) failed++;
+        li.className = ok ? 'pass' : 'fail';
+        li.textContent = `${ok ? '✔' : '✘'} ${r.name}${ok ? '' : ': ' + r.problems.join(', ')}`;
+        ul.append(li);
+      }
+      const summary = document.getElementById('summary');
+      summary.textContent = failed ? `FAIL: ${failed} of ${results.length} checks failed` : `PASS: all ${results.length} checks passed (${Object.keys(PARTS).length} parts, ${SYSTEMS.length} systems)`;
+      summary.style.color = failed ? '#b91c1c' : '#15803d';
+      document.body.dataset.result = failed ? 'fail' : 'pass';
+    })();
+  </script>
+</body>
+</html>

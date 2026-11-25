@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Body Explorer</title>
+  <meta name="description" content="An interactive, child-friendly tour of the human body in French, Dutch and English.">
+  <meta name="theme-color" content="#eaf5ff">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/content.js" defer></script>
+  <script src="js/i18n.js" defer></script>
+  <script src="js/body-svg.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#panel" data-i18n="skipLink">Skip to the information panel</a>
+
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="assets/favicon.svg" alt="" width="48" height="48">
+      <div>
+        <h1 data-i18n="appTitle">Body Explorer</h1>
+        <p class="tagline" data-i18n="tagline"></p>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="segmented" role="group" data-i18n-aria="modeLabel" id="mode-switch">
+        <button type="button" data-mode="explore" aria-pressed="true"><span aria-hidden="true">🔍</span> <span data-i18n="modeExplore">Explore</span></button>
+        <button type="button" data-mode="quiz" aria-pressed="false"><span aria-hidden="true">⭐</span> <span data-i18n="modeQuiz">Quiz</span></button>
+      </div>
+      <div class="segmented lang" role="group" data-i18n-aria="langLabel" id="lang-switch">
+        <button type="button" data-lang="fr" lang="fr" aria-pressed="false" title="Français">FR</button>
+        <button type="button" data-lang="nl" lang="nl" aria-pressed="false" title="Nederlands">NL</button>
+        <button type="button" data-lang="en" lang="en" aria-pressed="false" title="English">EN</button>
+      </div>
+      <button type="button" class="icon-btn" id="sound-toggle" aria-pressed="true"><span aria-hidden="true">🔔</span></button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <nav class="systems" aria-labelledby="systems-title">
+      <div class="systems-head">
+        <h2 id="systems-title" data-i18n="layersTitle">Body systems</h2>
+        <p class="hint" id="layers-hint"></p>
+      </div>
+      <div class="layer-list" id="layer-list"></div>
+      <div class="layer-actions">
+        <button type="button" class="btn ghost-btn" id="show-all" data-i18n="showAll">Show all</button>
+        <button type="button" class="btn ghost-btn" id="hide-all" data-i18n="hideAll">Hide all</button>
+      </div>
+    </nav>
+
+    <section class="stage" id="stage" data-i18n-aria="viewerLabel">
+      <div class="viewer" id="viewer"></div>
+      <div class="zoom-controls">
+        <button type="button" class="icon-btn" id="zoom-in" data-i18n-title="zoomIn"><span aria-hidden="true">＋</span></button>
+        <button type="button" class="icon-btn" id="zoom-out" data-i18n-title="zoomOut"><span aria-hidden="true">－</span></button>
+        <button type="button" class="icon-btn" id="zoom-reset" data-i18n-title="zoomReset"><span aria-hidden="true">⟲</span></button>
+      </div>
+      <div class="tooltip" id="tooltip" hidden></div>
+      <div class="fx" id="fx" aria-hidden="true"></div>
+    </section>
+
+    <aside class="panel" id="panel" tabindex="-1"></aside>
+  </main>
+
+  <footer class="footer"><p data-i18n="footer"></p></footer>
+
+  <div class="sr-only" id="announcer" aria-live="polite"></div>
+  <noscript><p class="noscript">This app needs JavaScript. · Cette application a besoin de JavaScript. · Deze app heeft JavaScript nodig.</p></noscript>
+</body>
+</html>
