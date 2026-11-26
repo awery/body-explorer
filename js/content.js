@@ -857,7 +857,17 @@
     },
   };
 
-  const api = { SYSTEMS, PARTS };
+  // Eye colours children can choose from (iris colour), shared by the 2D and 3D views.
+  const EYE_COLORS = [
+    { id: 'brown', hex: '#6b3e1f', name: { en: 'Brown', fr: 'Marron', nl: 'Bruin' } },
+    { id: 'hazel', hex: '#8a6a2b', name: { en: 'Hazel', fr: 'Noisette', nl: 'Hazelnoot' } },
+    { id: 'green', hex: '#4f8a4a', name: { en: 'Green', fr: 'Vert', nl: 'Groen' } },
+    { id: 'blue', hex: '#4a7cc2', name: { en: 'Blue', fr: 'Bleu', nl: 'Blauw' } },
+    { id: 'grey', hex: '#7f8c99', name: { en: 'Grey', fr: 'Gris', nl: 'Grijs' } },
+  ];
+  const DEFAULT_EYE_COLOR = 'blue';
+
+  const api = { SYSTEMS, PARTS, EYE_COLORS, DEFAULT_EYE_COLOR };
   root.BodyContent = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

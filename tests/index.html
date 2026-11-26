@@ -51,6 +51,15 @@
       for (const [id, p] of Object.entries(PARTS)) if (!sysIds.includes(p.system)) sysProblems.push(`${id} → unknown system ${p.system}`);
       check('Systems are translated and every part belongs to a known system', sysProblems);
 
+      // 2b. Eye colours: valid hex colour and a name in every language; the default exists.
+      const eyeProblems = [];
+      for (const c of BodyContent.EYE_COLORS) {
+        if (!/^#[0-9a-f]{6}$/i.test(c.hex)) eyeProblems.push(`${c.id}.hex`);
+        for (const lang of LANGS) if (!c.name[lang]) eyeProblems.push(`${c.id}.name.${lang}`);
+      }
+      if (!BodyContent.EYE_COLORS.some((c) => c.id === BodyContent.DEFAULT_EYE_COLOR)) eyeProblems.push('default eye colour missing');
+      check('Eye colours are valid and translated', eyeProblems);
+
       // 3. UI strings exist in every language.
       const keys = new Set(LANGS.flatMap((l) => Object.keys(UI[l])));
       const missingUi = [];

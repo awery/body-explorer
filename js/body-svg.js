@@ -156,7 +156,7 @@
 
     const eye = '<g class="blink">'
       + `<ellipse cx="180" cy="93" rx="10.5" ry="8.5" fill="#fff" stroke="${LINE}" stroke-width="1.5"/>`
-      + '<circle cx="181.5" cy="94" r="5.8" fill="#4a7cc2"/>'
+      + '<circle class="iris" cx="181.5" cy="94" r="5.8" fill="#4a7cc2"/>' // colour comes from CSS --eye-color
       + '<circle cx="181.5" cy="94" r="2.9" fill="#1d2230"/>'
       + '<circle cx="183.5" cy="91.8" r="1.5" fill="#fff"/></g>'
       + detail('M169,77 Q180,71 191,77', HAIR, 3);

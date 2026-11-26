@@ -16,6 +16,8 @@
 
   const UI = {
     en: {
+      eyeColorTitle: 'Pick an eye colour',
+      eyeColorFact: 'Eye colour comes from melanin, a colouring in the iris: lots of it gives brown eyes, very little gives blue eyes.',
       open3d: 'Try in 3D',
       docTitle: 'Body Explorer: discover the human body',
       appTitle: 'Body Explorer',
@@ -73,6 +75,8 @@
       noscript: 'This app needs JavaScript to work.',
     },
     fr: {
+      eyeColorTitle: 'Choisis la couleur des yeux',
+      eyeColorFact: 'La couleur des yeux vient de la mélanine, un pigment dans l’iris : beaucoup donne des yeux marron, très peu donne des yeux bleus.',
       open3d: 'Essayer en 3D',
       docTitle: 'Explore ton corps : découvre le corps humain',
       appTitle: 'Explore ton corps',
@@ -130,6 +134,8 @@
       noscript: 'Cette application a besoin de JavaScript pour fonctionner.',
     },
     nl: {
+      eyeColorTitle: 'Kies een oogkleur',
+      eyeColorFact: 'Je oogkleur komt van melanine, een kleurstof in de iris: veel ervan geeft bruine ogen, heel weinig geeft blauwe ogen.',
       open3d: 'Probeer in 3D',
       docTitle: 'Ontdek je lichaam: verken het menselijk lichaam',
       appTitle: 'Ontdek je lichaam',

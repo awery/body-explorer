@@ -38,10 +38,14 @@ import bmesh
 import bpy
 from mathutils import Matrix, Vector
 
+# Per-vertex values (0..1) exported as custom glTF attributes _SHORTS / _EYE (see dress_skin, mark_eyes).
+CUSTOM_ATTRIBUTES = ('shorts', 'eye')
+
 # part id -> (system, [BodyParts3D concept names], triangle budget)
 PARTS = {
     # Skin & senses (eyes/nose/tongue before skin and skull so they keep their own meshes)
-    'eyes': ('skin', ['left eyeball', 'right eyeball'], 3000),
+    # Only the outer coat (white + cornea): the app paints iris and pupil on it (see mark_eyes).
+    'eyes': ('skin', ['fibrous layer of left eyeball', 'fibrous layer of right eyeball'], 6000),
     'nose': ('skin', ['external nose'], 2500),
     'mouth': ('skin', ['tongue'], 2500),
     'skin': ('skin', ['skin'], 70000),
@@ -187,6 +191,27 @@ def dress_skin(obj, band=(0.665, 1.03)):
     print(f'  dressed skin: {len(marked)} shorts vertices, {len(region)} smoothed', flush=True)
 
 
+def mark_eyes(obj):
+    """Store, per vertex, how far it is from the front of its eyeball: 'eye' = (cos(angle) + 1) / 2,
+    where angle is measured from the eyeball centre between the vertex and straight ahead (-y).
+    The shader turns this into a round iris (about 30 degrees) and pupil (about 11 degrees), so the
+    eye colour can change instantly without a separate iris mesh."""
+    mesh = obj.data
+    front = Vector((0.0, -1.0, 0.0))
+    values = [0.0] * len(mesh.vertices)
+    for side in (-1, 1):  # left and right eyeball, split by the sign of x
+        idx = [i for i, v in enumerate(mesh.vertices) if v.co.x * side > 0]
+        lo = Vector(map(min, *(mesh.vertices[i].co for i in idx)))
+        hi = Vector(map(max, *(mesh.vertices[i].co for i in idx)))
+        centre = (lo + hi) / 2
+        for i in idx:
+            d = (mesh.vertices[i].co - centre).normalized()
+            values[i] = (d.dot(front) + 1) / 2
+    attr = mesh.attributes.new('eye', 'FLOAT', 'POINT')
+    attr.data.foreach_set('value', values)
+    mesh.update()
+
+
 def decimate(obj, budget):
     tris = len(obj.data.polygons)
     if tris <= budget:
@@ -253,7 +278,6 @@ def write_glb(objects, out_path):
         for n in no:
             nrm.extend(max(-127, min(127, round(n[i] * 127))) for i in range(3))
             nrm.append(0)
-        shorts = mesh.attributes.get('shorts')
         idx = array('H' if len(co) < 65536 else 'I')
         for t in mesh.loop_triangles:
             idx.extend(t.vertices)
@@ -267,13 +291,16 @@ def write_glb(objects, out_path):
         a_idx = accessor(add_view(idx, 34963), 5123 if idx.typecode == 'H' else 5125, len(idx), 'SCALAR')
 
         attributes = {'POSITION': a_pos, 'NORMAL': a_nrm}
-        if shorts:
+        for name in CUSTOM_ATTRIBUTES:
+            layer = mesh.attributes.get(name)
+            if not layer:
+                continue
             # Custom attribute (glTF requires a leading underscore): uint8 0..255, 4-byte stride.
-            sh = array('B')
-            for d in shorts.data:
-                sh.extend((round(max(0.0, min(1.0, d.value)) * 255), 0, 0, 0))
-            sv = add_view(sh, 34962); sv['byteStride'] = 4
-            attributes['_SHORTS'] = accessor(sv, 5121, len(co), 'SCALAR', True)
+            data = array('B')
+            for d in layer.data:
+                data.extend((round(max(0.0, min(1.0, d.value)) * 255), 0, 0, 0))
+            view = add_view(data, 34962); view['byteStride'] = 4
+            attributes['_' + name.upper()] = accessor(view, 5121, len(co), 'SCALAR', True)
 
         gltf['meshes'].append({'name': obj.name, 'primitives': [
             {'attributes': attributes, 'indices': a_idx, 'mode': 4}]})
@@ -346,6 +373,7 @@ def main():
         obj.data.update()
     size = (hi - lo) * 0.001
     dress_skin(next(o for o in objects if o['part'] == 'skin'))
+    mark_eyes(next(o for o in objects if o['part'] == 'eyes'))
     print(f'Body size (m): x={size.x:.3f} y={size.y:.3f} z={size.z:.3f}')
 
     write_glb(objects, args.out)

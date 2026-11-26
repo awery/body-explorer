@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const { SYSTEMS, PARTS } = window.BodyContent;
+  const { SYSTEMS, PARTS, EYE_COLORS, DEFAULT_EYE_COLOR } = window.BodyContent;
   const { LANGS, SPEECH_LOCALES, UI } = window.BodyI18n;
   const { buildSVG, DRAW_ORDER, VIEWBOX } = window.BodySVG;
 
@@ -44,6 +44,7 @@
     layers: new Set(Array.isArray(saved.layers) ? saved.layers.filter((id) => sysById[id]) : DEFAULT_LAYERS),
     visited: new Set(Array.isArray(saved.visited) ? saved.visited.filter((id) => PARTS[id]) : []),
     sound: saved.sound !== false,
+    eyeColor: EYE_COLORS.some((c) => c.id === saved.eyeColor) ? saved.eyeColor : DEFAULT_EYE_COLOR,
     selected: null,
     mode: 'explore',
     quiz: null,
@@ -54,7 +55,8 @@
     const layers = state.mode === 'quiz' && state.exploreLayers ? state.exploreLayers : state.layers;
     try {
       localStorage.setItem(STORE_KEY, JSON.stringify({
-        lang: state.lang, layers: [...layers], visited: [...state.visited], sound: state.sound,
+        ...load(), // keep settings written by the 3D page
+        lang: state.lang, layers: [...layers], visited: [...state.visited], sound: state.sound, eyeColor: state.eyeColor,
       }));
     } catch { /* storage unavailable (private mode…): the app still works */ }
   }
@@ -376,11 +378,38 @@
           <h3><span aria-hidden="true">💡</span> ${esc(t('didYouKnow'))}</h3>
           <p>${esc(p.fact)}</p>
         </div>
+        ${id === 'eyes' ? eyePicker() : ''}
         <div class="card-actions">
           ${speakButton()}
           <button type="button" class="btn secondary" data-action="back"><span aria-hidden="true">←</span> ${esc(t('backToStart'))}</button>
         </div>
       </article>`;
+  }
+
+  function eyePicker() {
+    const label = esc(t('eyeColorTitle'));
+    return `
+      <div class="eye-picker">
+        <h3><span aria-hidden="true">👁️</span> ${label}</h3>
+        <div class="swatches" role="group" aria-label="${label}">
+          ${EYE_COLORS.map((c) => `<button type="button" class="swatch" data-eye="${c.id}" style="--swatch:${c.hex}" aria-pressed="${c.id === state.eyeColor}">
+            <span class="swatch-dot" aria-hidden="true"></span>${esc(c.name[state.lang])}</button>`).join('')}
+        </div>
+        <p class="hint">${esc(t('eyeColorFact'))}</p>
+      </div>`;
+  }
+
+  function applyEyeColor() {
+    svg.style.setProperty('--eye-color', EYE_COLORS.find((c) => c.id === state.eyeColor).hex);
+  }
+
+  function setEyeColor(id) {
+    state.eyeColor = id;
+    save();
+    applyEyeColor();
+    $$('.swatch', panel).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.eye === id)));
+    sfx('click');
+    announce(EYE_COLORS.find((c) => c.id === id).name[state.lang]);
   }
 
   function welcomeCard() {
@@ -729,6 +758,8 @@
   });
 
   panel.addEventListener('click', (e) => {
+    const swatch = e.target.closest('[data-eye]');
+    if (swatch) { setEyeColor(swatch.dataset.eye); return; }
     const chip = e.target.closest('[data-select]');
     if (chip) {
       const id = chip.dataset.select;
@@ -775,6 +806,7 @@
   /* ───────────── Start ───────────── */
 
   setView(BASE);
+  applyEyeColor();
   renderStatic();
   applyLayers();
   renderPanel();

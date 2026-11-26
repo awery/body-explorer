@@ -14,7 +14,7 @@ import {
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
-const { SYSTEMS, PARTS } = window.BodyContent;
+const { SYSTEMS, PARTS, EYE_COLORS, DEFAULT_EYE_COLOR } = window.BodyContent;
 const { LANGS, SPEECH_LOCALES, UI } = window.BodyI18n;
 
 const MODEL_URL = 'model/body.glb';
@@ -85,7 +85,9 @@ function loadStore() {
 }
 function saveStore() {
   try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ ...loadStore(), lang: state.lang, visited: [...state.visited] }));
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      ...loadStore(), lang: state.lang, visited: [...state.visited], eyeColor: state.eyeColor,
+    }));
   } catch { /* storage unavailable */ }
 }
 function pickLang(saved) {
@@ -103,6 +105,7 @@ const stored = loadStore();
 const state = {
   lang: pickLang(stored.lang),
   visited: new Set(Array.isArray(stored.visited) ? stored.visited.filter((id) => PARTS[id]) : []),
+  eyeColor: EYE_COLORS.some((c) => c.id === stored.eyeColor) ? stored.eyeColor : DEFAULT_EYE_COLOR,
   layers: new Set(DEFAULT_LAYERS),
   selected: null,
   hover: null,
@@ -187,6 +190,8 @@ const breath = sin(time.mul(1.3)).mul(0.5).add(0.5);              // 0..1, slow
 const heartbeat = pow(sin(time.mul(3.4)).mul(0.5).add(0.5), float(10)); // short pulses
 
 const uSkinSolid = uniform(1); // 1 = normal skin, 0 = X-ray glass
+const eyeHex = (id) => EYE_COLORS.find((c) => c.id === id).hex;
+const uIrisColor = uniform(new THREE.Color(eyeHex(state.eyeColor)));
 
 function glowNodes(u) {
   const rim = fresnel(2.2);
@@ -199,6 +204,21 @@ function makeMaterial(partId, system) {
   const u = { sel: uniform(0), hover: uniform(0) };
   uniformsByPart.set(partId, u);
   const hex = PART_COLORS[partId] ?? 0xcccccc;
+
+  if (partId === 'eyes') {
+    // _eye = (cos(angle from straight ahead) + 1) / 2, per vertex (see tools/3d/build_model.py).
+    // Iris: within ~30 degrees of the front; pupil: within ~11 degrees; thin darker ring at the edge.
+    const e = attribute('_eye', 'float');
+    const iris = smoothstep(0.929, 0.937, e);
+    const pupil = smoothstep(0.9885, 0.9915, e);
+    const ring = iris.mul(oneMinus(smoothstep(0.937, 0.948, e)));
+    const irisColor = mix(vec3(uIrisColor), vec3(uIrisColor).mul(0.45), ring);
+    const m = new THREE.MeshPhysicalNodeMaterial({ roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.05 });
+    m.colorNode = mix(mix(color(0xf7f8fb), irisColor, iris), color(0x111318), pupil);
+    // Hover glow only: a gold selection glow would hide the eye colour the child just picked.
+    m.emissiveNode = color(0xffffff).mul(u.hover.mul(fresnel(2.2)).mul(0.4));
+    return m;
+  }
 
   if (partId === 'skin') {
     const m = new THREE.MeshPhysicalNodeMaterial({
@@ -256,7 +276,7 @@ function setGhost(id) {
   if (ghost) ghost.removeFromParent();
   ghost = null;
   const mesh = id && meshesByPart.get(id);
-  if (!mesh || id === 'skin') return;
+  if (!mesh || id === 'skin' || id === 'eyes') return; // already visible; a glow would hide them
   ghost = new THREE.Mesh(mesh.geometry, ghostMaterial);
   ghost.renderOrder = 999;
   mesh.add(ghost); // follows the part when it moves; hidden with it
@@ -435,6 +455,27 @@ function select(id) {
   renderPanel();
 }
 
+function eyePicker() {
+  const label = esc(t('eyeColorTitle'));
+  return `
+    <div class="eye-picker">
+      <h3><span aria-hidden="true">👁️</span> ${label}</h3>
+      <div class="swatches" role="group" aria-label="${label}">
+        ${EYE_COLORS.map((c) => `<button type="button" class="swatch" data-eye="${c.id}" style="--swatch:${c.hex}" aria-pressed="${c.id === state.eyeColor}">
+          <span class="swatch-dot" aria-hidden="true"></span>${esc(c.name[state.lang])}</button>`).join('')}
+      </div>
+      <p class="hint">${esc(t('eyeColorFact'))}</p>
+    </div>`;
+}
+
+function setEyeColor(id) {
+  state.eyeColor = id;
+  saveStore();
+  uIrisColor.value.set(eyeHex(id)); // shader uniform: the eyes change colour on the next frame
+  $$('.swatch', panel).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.eye === id)));
+  announce(EYE_COLORS.find((c) => c.id === id).name[state.lang]);
+}
+
 function renderPanel() {
   const html = [];
   if (state.selected) {
@@ -450,6 +491,7 @@ function renderPanel() {
         <h3>${esc(t('whatItDoes'))}</h3>
         <p>${esc(p.info)}</p>
         <div class="fact"><h3><span aria-hidden="true">💡</span> ${esc(t('didYouKnow'))}</h3><p>${esc(p.fact)}</p></div>
+        ${id === 'eyes' ? eyePicker() : ''}
         <div class="card-actions">
           ${speechOK ? `<button type="button" class="btn" data-action="speak"><span aria-hidden="true">🔊</span> <span class="speak-label">${esc(t('readAloud'))}</span></button>` : ''}
           <button type="button" class="btn secondary" data-action="back"><span aria-hidden="true">←</span> ${esc(t('backToStart'))}</button>
@@ -536,6 +578,8 @@ function bindEvents() {
   });
 
   panel.addEventListener('click', (e) => {
+    const swatch = e.target.closest('[data-eye]');
+    if (swatch) { setEyeColor(swatch.dataset.eye); return; }
     const chip = e.target.closest('[data-select]');
     if (chip) {
       select(chip.dataset.select);

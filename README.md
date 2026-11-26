@@ -17,6 +17,8 @@ find-the-body-part game.
   using a French, Dutch or English voice).
 - **Quiz**: 10 random "Can you find…?" questions, with a hint after two wrong tries and a star score at the end.
 - **Discovery progress**: a ✓ appears next to each part a child has already opened (saved in the browser).
+- **Eye colour**: the *Eyes* card lets children pick brown, hazel, green, blue or grey eyes. The choice is
+  remembered and shared by the 2D and 3D views.
 - **Zoom & pan**: buttons, mouse wheel, pinch and drag; keyboard `+` `-` `0`.
 - Small touches: a beating heart, breathing lungs and blinking eyes, plus optional sound effects.
 - Works on **desktop, tablet and phone**, supports **dark mode**, and respects *reduced motion* settings.
