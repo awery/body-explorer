@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Body Explorer 3D</title>
+  <meta name="description" content="Rotate and explore a 3D human body, in French, Dutch and English.">
+  <meta name="theme-color" content="#eaf5ff">
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="style3d.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/build/three.webgpu.js",
+        "three/webgpu": "./vendor/three/build/three.webgpu.js",
+        "three/tsl": "./vendor/three/build/three.tsl.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+  <script src="../js/content.js" defer></script>
+  <script src="../js/i18n.js" defer></script>
+  <script type="module" src="app3d.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#panel" data-i18n="skipLink">Skip to the information panel</a>
+
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="../assets/favicon.svg" alt="" width="48" height="48">
+      <div>
+        <h1><span data-t3="title3d">Body Explorer 3D</span> <span class="badge" data-t3="prototype">Prototype</span></h1>
+        <p class="tagline" data-t3="hint3d"></p>
+      </div>
+    </div>
+    <div class="controls">
+      <a class="btn secondary" href="../index.html" id="to-2d"><span aria-hidden="true">←</span> <span data-t3="back2d">2D view</span></a>
+      <div class="segmented lang" role="group" data-i18n-aria="langLabel" id="lang-switch">
+        <button type="button" data-lang="fr" lang="fr" aria-pressed="false" title="Français">FR</button>
+        <button type="button" data-lang="nl" lang="nl" aria-pressed="false" title="Nederlands">NL</button>
+        <button type="button" data-lang="en" lang="en" aria-pressed="false" title="English">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <nav class="systems" aria-labelledby="systems-title">
+      <div class="systems-head">
+        <h2 id="systems-title" data-i18n="layersTitle">Body systems</h2>
+        <p class="hint" data-i18n="layersHint"></p>
+      </div>
+      <div class="layer-list" id="layer-list"></div>
+      <div class="layer-actions">
+        <button type="button" class="btn ghost-btn" id="show-all" data-i18n="showAll">Show all</button>
+        <button type="button" class="btn ghost-btn" id="hide-all" data-i18n="hideAll">Hide all</button>
+      </div>
+    </nav>
+
+    <section class="stage stage3d" id="stage" data-i18n-aria="viewerLabel">
+      <canvas id="canvas3d"></canvas>
+
+      <div class="tools3d">
+        <label class="slider">
+          <span><span aria-hidden="true">🔪</span> <span data-t3="slice">Cut</span></span>
+          <input type="range" id="slice" min="0" max="100" value="0">
+        </label>
+        <label class="slider">
+          <span><span aria-hidden="true">💥</span> <span data-t3="explode">Spread out</span></span>
+          <input type="range" id="explode" min="0" max="100" value="0">
+        </label>
+        <button type="button" class="icon-btn" id="spin" aria-pressed="true" data-t3-title="spin"><span aria-hidden="true">🔄</span></button>
+        <button type="button" class="icon-btn" id="reset-view" data-t3-title="resetView"><span aria-hidden="true">⟲</span></button>
+      </div>
+
+      <div class="tooltip" id="tooltip" hidden></div>
+      <p class="gpu-badge" id="gpu-badge" hidden></p>
+
+      <div class="loading" id="loading">
+        <p id="loading-text">…</p>
+        <div class="progress-bar"><span id="loading-bar" style="width:0%"></span></div>
+      </div>
+    </section>
+
+    <aside class="panel" id="panel" tabindex="-1"></aside>
+  </main>
+
+  <footer class="footer">
+    <p><span data-i18n="footer"></span> · <span data-t3="credits"></span></p>
+  </footer>
+
+  <div class="sr-only" id="announcer" aria-live="polite"></div>
+  <script>
+    // ES modules and the 3D model cannot load from file:// — explain instead of spinning forever.
+    if (location.protocol === 'file:') {
+      document.getElementById('loading').classList.add('error');
+      document.getElementById('loading').innerHTML =
+        '<p>The 3D view needs a web server (see README). · La vue 3D a besoin d’un serveur web. · De 3D-weergave heeft een webserver nodig.</p>' +
+        '<p><a href="../index.html">← 2D</a></p>';
+    }
+  </script>
+  <noscript><p class="noscript">This app needs JavaScript. · Cette application a besoin de JavaScript. · Deze app heeft JavaScript nodig.</p></noscript>
+</body>
+</html>

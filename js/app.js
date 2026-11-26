@@ -103,6 +103,7 @@
       el.setAttribute('aria-label', t(el.dataset.i18nTitle));
     });
     $('title', svg).textContent = t('viewerLabel');
+    $('#to-3d').href = `3d/index.html?lang=${state.lang}`;
     $$('.layer-btn', layerList).forEach((b) => { $('.label', b).textContent = sysName(b.dataset.layer); });
     $$('#lang-switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === state.lang)));
     $$('#mode-switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
@@ -732,7 +733,8 @@
     if (chip) {
       const id = chip.dataset.select;
       select(id);
-      $(`[data-select="${id}"]`, panel)?.focus();
+      $(`[data-select="${id}"]`, panel)?.focus({ preventScroll: true });
+      panel.scrollTo({ top: 0, behavior: 'smooth' }); // show the info card
       return;
     }
     const btn = e.target.closest('[data-action]');

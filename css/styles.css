@@ -119,6 +119,8 @@ button { font: inherit; color: inherit; }
 }
 .btn:hover { filter: brightness(1.05); }
 .btn:active { transform: translateY(2px); box-shadow: none; }
+a.btn { text-decoration: none; }
+#to-3d .short { display: none; }
 .btn.secondary { background: var(--card-2); color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); }
 .btn.big { min-height: 54px; padding: 10px 26px; font-size: 1.1rem; }
 
@@ -533,6 +535,9 @@ button { font: inherit; color: inherit; }
   #mode-switch { order: 2; width: 100%; }
   #mode-switch button { flex: 1; }
   .card h2 { font-size: 1.35rem; }
+  #to-3d { padding: 6px 14px; }
+  #to-3d .long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  #to-3d .short { display: inline; }
 }
 
 @media (prefers-reduced-motion: reduce) {
